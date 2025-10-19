@@ -1,0 +1,310 @@
+package ejercicio;
+
+public class Personaje {
+	private String nombre;
+	private int vida;
+	private int ataque;
+	private int defensa;
+	private int alcance;
+	
+	public Personaje(String nombre, int vida, int ataque, int defensa, int alcance) {
+		if ( vida <= 0 || ataque <= 0 || defensa <=0 || alcance <= 0) {
+			throw new IllegalArgumentException("Error: Se ingreso un número menor igual a 0");
+		}
+		this.nombre = nombre;
+		this.vida = vida;
+		this.ataque = ataque;
+		this.defensa = defensa;
+		this.alcance = alcance;
+	}
+	
+	public String getNombre() {
+		return nombre;
+	}
+	
+	public int getVida() {
+		return vida;
+	}
+	
+	public int getAtaque() {
+		return ataque;
+	}
+	
+	public int getDefensa() {
+		return defensa;
+	}
+	
+	public int getAlcance() {
+		return alcance;
+	}
+	
+	public void setNombre(String nombre) {
+		this.nombre = nombre;
+	}
+	
+	public void setVida(int vida) {
+	    this.vida = vida;
+	}
+
+	public void setAtaque(int ataque) {
+	    this.ataque = ataque;
+	}
+
+	public void setDefensa(int defensa) {
+	    this.defensa = defensa;
+	}
+
+	public void setAlcance(int alcance) {
+	    this.alcance = alcance;
+	}
+	
+	@Override
+	public String toString() {
+		return nombre + "," + vida + "," + ataque + "," + defensa + "," + alcance;
+	}
+
+
+
+
+package ejercicio;
+
+import java.io.*;
+import java.util.ArrayList;
+
+public class Gestor {
+	private ArrayList<Personaje> personajes;
+	private final String archivo = "personajes.txt";
+	
+	public Gestor() {
+		personajes = new ArrayList<>();
+		cargarDesdeArchivo();	
+		
+	}
+	
+	// Método para cargar personajes desde archivo
+	
+	private void cargarDesdeArchivo() {
+		try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
+			String linea;
+			while ((linea = br.readLine()) != null ) {
+				String[] datos = linea.split(",");
+				if (datos.length == 5) {
+					String nombre = datos[0];
+					int vida = Integer.parseInt(datos[1]);
+					int ataque = Integer.parseInt(datos[2]);
+					int defensa = Integer.parseInt(datos[3]);
+					int alcance = Integer.parseInt(datos[4]);
+					personajes.add(new Personaje(nombre, vida, ataque, defensa, alcance));
+				}
+			}
+		} catch (FileNotFoundException e) {
+			System.out.println("Archivo no encontrado, se creara uno  nuevo.");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void actualizarDesdeArchivo() {
+	    personajes.clear();
+	    cargarDesdeArchivo();
+	}
+
+	
+	// Método para guardar personajes en un archivo
+	private void guardarEnArchivo() {
+		try(BufferedWriter bw = new BufferedWriter(new FileWriter(archivo))) {
+			for (Personaje p : personajes) {
+				bw.write(p.toString());
+				bw.newLine();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	// Método que muestra personajes
+	
+    public void mostrarPersonajes() {
+    	for (Personaje p : personajes) {
+		System.out.println(p);
+    	}
+	}
+    
+    // Método para añadir nuevo Personaje
+    public void agregarPersonaje(Personaje p) {
+    	for (Personaje existente : personajes) {
+    		if (existente.getNombre().equalsIgnoreCase(p.getNombre())) {
+    			System.out.println("Error: El personaje ya existe");
+    			return;
+    		}
+    	}
+    	personajes.add(p);
+    	guardarEnArchivo();
+    	System.out.println("Personaje añadido exitosamente");
+    }
+    
+    // Método para eliminar un personaje por su nombre
+    
+    public void eliminarPersonaje(String nombre) {
+    	personajes.removeIf( p -> p.getNombre().equalsIgnoreCase(nombre));
+    	guardarEnArchivo();
+    	System.out.println("Personaje eliminado (si existía");
+    }
+    
+    // Método para modificar un personaje
+    
+   public void modificarPersonaje(String nombre, int vida, int ataque, int defensa, int alcance) {
+	   for (Personaje p : personajes) {
+		   if(p.getNombre().equalsIgnoreCase(nombre)) {
+			   p.setVida(vida);
+			   p.setAtaque(ataque);
+			   p.setDefensa(defensa);
+			   p.setAlcance(alcance);
+			   guardarEnArchivo();
+			   System.out.println("Personaje modificado.");
+               return;
+			   
+		   }
+	   }
+	   System.out.println("No se encontró el personaje.");
+   }
+   
+   
+
+   public void filtrarPorAtributo(String atributo) {
+	    actualizarDesdeArchivo();
+
+	    if (personajes.isEmpty()) {
+	        System.out.println("No hay personajes cargados.");
+	        return;
+	    }
+
+	    personajes.sort((p1, p2) -> {
+	        switch (atributo.toLowerCase()) {
+	            case "vida": 
+	            	return p2.getVida() - p1.getVida();
+	            case "ataque": 
+	            	return p2.getAtaque() - p1.getAtaque();
+	            case "defensa": 
+	            	return p2.getDefensa() - p1.getDefensa();
+	            case "alcance": 
+	            	return p2.getAlcance() - p1.getAlcance();
+	            default: 
+	            	return 0;
+	        }
+	    });
+
+	    System.out.println("\n--- Personajes ordenados por " + atributo + " ---");
+	    for (Personaje p : personajes) {
+	        System.out.println(p);
+	    }
+   }
+
+        
+   public void mostrarEstadisticas() {
+	    actualizarDesdeArchivo();
+
+	    if (personajes.isEmpty()) {
+	        System.out.println("No hay personajes para calcular estadísticas.");
+	        return;
+	    }
+
+	    double totalVida = 0, totalAtaque = 0, totalDefensa = 0, totalAlcance = 0;
+
+	    for (Personaje p : personajes) {
+	        totalVida += p.getVida();
+	        totalAtaque += p.getAtaque();
+	        totalDefensa += p.getDefensa();
+	        totalAlcance += p.getAlcance();
+	    }
+
+	    int n = personajes.size();
+
+	    System.out.println("\n--- ESTADÍSTICAS GENERALES ---");
+	    System.out.println("Total de personajes: " + n);
+	    System.out.printf("Promedio de Vida: %.2f%n", totalVida / n);
+	    System.out.printf("Promedio de Ataque: %.2f%n", totalAtaque / n);
+	    System.out.printf("Promedio de Defensa: %.2f%n", totalDefensa / n);
+	    System.out.printf("Promedio de Alcance: %.2f%n", totalAlcance / n);
+	}
+
+
+}
+
+
+
+public class Main {
+    public static void main(String[] args) {
+        Gestor gestor = new Gestor();
+        Scanner sc = new Scanner(System.in);
+        int opcion;
+
+        do {
+            System.out.println("\n--- MENÚ GESTOR DE PERSONAJES ---");
+            System.out.println("1. Mostrar personajes");
+            System.out.println("2. Agregar personaje");
+            System.out.println("3. Modificar personaje");
+            System.out.println("4. Eliminar personaje");
+            System.out.println("5. Filtrar personajes por atributo");
+            System.out.println("6. Mostrar estadísticas generales");
+            System.out.println("7. Salir");
+            System.out.print("Opción: ");
+            opcion = sc.nextInt();
+            sc.nextLine();
+
+            switch (opcion) {
+                case 1:
+                    gestor.mostrarPersonajes();
+                    break;
+                case 2:
+                    System.out.print("Nombre: ");
+                    String nombre = sc.nextLine();
+                    System.out.print("Vida: ");
+                    int vida = sc.nextInt();
+                    System.out.print("Ataque: ");
+                    int ataque = sc.nextInt();
+                    System.out.print("Defensa: ");
+                    int defensa = sc.nextInt();
+                    System.out.print("Alcance: ");
+                    int alcance = sc.nextInt();
+                    gestor.agregarPersonaje(new Personaje(nombre, vida, ataque, defensa, alcance));
+                    break;
+                case 3:
+                    System.out.print("Nombre a modificar: ");
+                    nombre = sc.nextLine();
+                    System.out.print("Nueva vida: ");
+                    vida = sc.nextInt();
+                    System.out.print("Nuevo ataque: ");
+                    ataque = sc.nextInt();
+                    System.out.print("Nueva defensa: ");
+                    defensa = sc.nextInt();
+                    System.out.print("Nuevo alcance: ");
+                    alcance = sc.nextInt();
+                    gestor.modificarPersonaje(nombre, vida, ataque, defensa, alcance);
+                    break;
+                case 4:
+                    System.out.print("Nombre a eliminar: ");
+                    nombre = sc.nextLine();
+                    gestor.eliminarPersonaje(nombre);
+                    break;
+                case 5:
+                    System.out.print("¿Por qué atributo deseas ordenar? (vida/ataque/defensa/alcance): ");
+                    String atributo = sc.nextLine();
+                    gestor.filtrarPorAtributo(atributo);
+                    break;
+                case 6:
+                    gestor.mostrarEstadisticas();
+                    break;
+                case 7:
+                	System.out.print("Saliendo... ");
+                	break;
+
+            }
+        } while (opcion != 7);
+        sc.close();
+    }
+}
+
+
+
+}
