@@ -1,0 +1,214 @@
+package modelo;
+
+public class Empleado {
+	private int numero;
+	private String nombre;
+	private double sueldo;
+	
+	public Empleado(int numero, String nombre, double sueldo) {
+		this.numero = numero;
+		this.nombre = nombre;
+		this.sueldo = sueldo;
+	}
+	
+	public int getNumero () {
+		return numero;
+	}
+	
+	public String getNombre () {
+		return nombre;
+	}
+	
+	public double getSueldo () {
+		return sueldo;
+	}
+	
+	public void setNumero (int numero) {
+		this.numero = numero;
+	}
+	
+	public void setNombre (String nombre) {
+		this.nombre = nombre;
+	}
+	
+	public void setSueldo (double sueldo) {
+		this.sueldo = sueldo;
+	}
+	
+	public String toString () {
+		 return "Empleado [Número=" + numero + ", Nombre=" + nombre + ", Sueldo=" + sueldo + "]";
+		
+	}
+
+}
+
+
+
+package vista;
+import java.util.Scanner;
+
+public class VistaEmpleado {
+    private Scanner sc = new Scanner(System.in);
+
+    public int mostrarMenu() {
+        System.out.println("\n--- MENÚ DE EMPLEADOS ---");
+        System.out.println("1. Listar empleados");
+        System.out.println("2. Agregar empleado");
+        System.out.println("3. Buscar empleado");
+        System.out.println("4. Eliminar empleado");
+        System.out.println("5. Salir");
+        System.out.print("Opción: ");
+        return sc.nextInt();
+    }
+
+    public int pedirNumero() {
+        System.out.print("Ingrese número de empleado: ");
+        return sc.nextInt();
+    }
+
+    public String pedirNombre() {
+        System.out.print("Ingrese nombre: ");
+        sc.nextLine(); // limpiar buffer
+        return sc.nextLine();
+    }
+
+    public double pedirSueldo() {
+        System.out.print("Ingrese sueldo: ");
+        return sc.nextDouble();
+    }
+
+    public void mostrarMensaje(String msg) {
+        System.out.println(msg);
+    }
+}
+
+
+
+
+
+package controlador;
+
+import modelo.Empleado;
+import vista.VistaEmpleado;
+import java.io.*;
+import java.util.ArrayList;
+
+public class ControladorEmpleado {
+    private final String archivo = "empleados.txt";
+    private ArrayList<Empleado> lista;
+    private VistaEmpleado vista;
+
+    public ControladorEmpleado(VistaEmpleado vista) {
+        this.vista = vista;
+        lista = new ArrayList<>();
+        leerEmpleados();
+    }
+
+    // Leer los empleados del archivo
+    public void leerEmpleados() {
+        lista.clear();
+        try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
+            String linea;
+            while ((linea = br.readLine()) != null) {
+                String[] datos = linea.split(",");
+                int numero = Integer.parseInt(datos[0]); //Ayuda a convertir el numero que esta en texto en un entero
+                String nombre = datos[1];
+                double sueldo = Double.parseDouble(datos[2]); // Ayuda a convertir el double-texto en un double
+                lista.add(new Empleado(numero, nombre, sueldo));
+            }
+            vista.mostrarMensaje("Archivo cargado correctamente. Total empleados: " + lista.size());
+        } catch (FileNotFoundException e) {
+            vista.mostrarMensaje("Archivo no encontrado. Se creará al guardar nuevos empleados.");
+        } catch (IOException e) {
+            vista.mostrarMensaje("Error al leer el archivo: " + e.getMessage());
+        }
+    }
+
+    // Guardar los empleados en el archivo
+    private void guardarEmpleados() {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(archivo))) {
+            for (Empleado emp : lista) {
+                pw.println(emp.getNumero() + "," + emp.getNombre() + "," + emp.getSueldo());
+            }
+        } catch (IOException e) {
+            vista.mostrarMensaje("Error al guardar: " + e.getMessage());
+        }
+    }
+
+    public void listarEmpleados() {
+        if (lista.isEmpty()) {
+            vista.mostrarMensaje("No hay empleados registrados.");
+        } else {
+            vista.mostrarMensaje("\n--- LISTA DE EMPLEADOS ---");
+            for (Empleado e : lista) {
+                System.out.println(e);
+            }
+        }
+    }
+
+    public void agregarEmpleado() {
+        int numero = vista.pedirNumero();
+        String nombre = vista.pedirNombre();
+        double sueldo = vista.pedirSueldo();
+        lista.add(new Empleado(numero, nombre, sueldo));
+        guardarEmpleados();
+        vista.mostrarMensaje("El empleado ha sido agregado correctamente.");
+    }
+
+    public void buscarEmpleado() {
+        int numero = vista.pedirNumero();
+        for (Empleado e : lista) {
+            if (e.getNumero() == numero) {
+                vista.mostrarMensaje("El empleado ha sido encontrado: " + e);
+                return;
+            }
+        }
+        vista.mostrarMensaje("Empleado no encontrado.");
+    }
+
+    public void eliminarEmpleado() {
+        int numero = vista.pedirNumero();
+        boolean eliminado = lista.removeIf(e -> e.getNumero() == numero);
+        if (eliminado) {
+            guardarEmpleados();
+            vista.mostrarMensaje("El empleado se ha eliminiado correctamente.");
+        } else {
+            vista.mostrarMensaje("No se encontró un empleado con ese número.");
+        }
+    }
+}
+
+
+
+
+
+package main;
+
+import vista.VistaEmpleado;
+import controlador.ControladorEmpleado;
+
+public class Main {
+    public static void main(String[] args) {
+        VistaEmpleado vista = new VistaEmpleado();
+        ControladorEmpleado controlador = new ControladorEmpleado(vista);
+        int opcion;
+
+        do {
+            opcion = vista.mostrarMenu();
+            switch (opcion) {
+                case 1 -> controlador.listarEmpleados();
+                case 2 -> controlador.agregarEmpleado();
+                case 3 -> controlador.buscarEmpleado();
+                case 4 -> controlador.eliminarEmpleado();
+                case 5 -> vista.mostrarMensaje("Saliendo del programa...");
+                default -> vista.mostrarMensaje("Opción no válida.");
+            }
+        } while (opcion != 5);
+    }
+}
+
+
+
+
+
+
