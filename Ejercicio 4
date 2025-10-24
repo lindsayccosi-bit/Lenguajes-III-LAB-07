@@ -1,0 +1,94 @@
+package exercise3;
+
+import java.io.*;
+import java.util.*;
+import javax.swing.JFileChooser;
+
+public class ContadorPalabras {
+
+    public static void main(String[] args) {
+        JFileChooser chooser = new JFileChooser();
+        System.out.println("Seleccione el archivo de texto a analizar...");
+        int opcion = chooser.showOpenDialog(null);
+
+        if (opcion != JFileChooser.APPROVE_OPTION) {
+            System.out.println("No se seleccionó ningún archivo. Programa finalizado.");
+            return;
+        }
+
+        File archivo = chooser.getSelectedFile();
+
+        try {
+            analizarArchivo(archivo);
+        } catch (IOException e) {
+            System.out.println("Error al leer el archivo: " + e.getMessage());
+        }
+    }
+
+    public static void analizarArchivo(File archivo) throws IOException {
+        int totalLineas = 0;
+        int totalPalabras = 0;
+        int totalCaracteres = 0;
+
+        // Map guarda informacion en pares clave(string) valor(integer)
+        // hash map para guardar las palabras y sus frecuencias.
+        Map<String, Integer> frecuenciaPalabras = new HashMap<>();
+
+        BufferedReader br = new BufferedReader(new FileReader(archivo));
+        String linea;
+
+        while ((linea = br.readLine()) != null) {
+            totalLineas++;
+            totalCaracteres += linea.length();
+
+            StringBuilder palabra = new StringBuilder(); // crea palabra vacia para ir agregando caracters y formar una palabra
+            for (char c : linea.toCharArray()) { // se recorre cada caracter de la linea y la convierte en un arreglo de caracteres
+            	// detecta los caracteres que pertenecen a una palabra y evita contar signos o espacios como si fueran palabras
+                if (Character.isLetterOrDigit(c)) {  
+                    palabra.append(c);
+                } else if (palabra.length() > 0) {
+                    String p = palabra.toString().toLowerCase(); // convierte todos los caracteres a minúsculas
+                    // getOr... busca si la palabra existe en el mapa y da su valor act, caso no exista se le da 0 por dfault
+                    // luego de se le suma 1
+                    frecuenciaPalabras.put(p, frecuenciaPalabras.getOrDefault(p, 0) + 1);
+                    totalPalabras++;
+                    palabra.setLength(0);
+                }
+            }
+            if (palabra.length() > 0) {
+                String p = palabra.toString().toLowerCase();
+                frecuenciaPalabras.put(p, frecuenciaPalabras.getOrDefault(p, 0) + 1);
+                totalPalabras++;
+            }
+        }
+
+        br.close();
+
+        double promedio = (double) totalPalabras / totalLineas;
+        double promedioRedondeado = Math.round(promedio * 100.0) / 100.0; // redondea a 2 decimales
+
+        System.out.println("\n---- RESULTADOS ----");
+        System.out.println("Total de líneas: " + totalLineas);
+        System.out.println("Total de palabras: " + totalPalabras);
+        System.out.println("Total de caracteres: " + totalCaracteres);
+        System.out.println("Promedio de palabras por línea: " + promedioRedondeado);
+
+        System.out.println("\nPalabras más frecuentes:");
+        mostrarFrecuencias(frecuenciaPalabras);
+    }
+
+    public static void mostrarFrecuencias(Map<String, Integer> mapa) {
+    	
+    	// entrySet devuelve un conjunto de pares clave-valor, llamados entries.
+  //	Cada entry tiene una palabra (key) y su cantidad (value).
+        List<Map.Entry<String, Integer>> lista = new ArrayList<>(mapa.entrySet()); // convierte en una lista de pares clave valor
+        lista.sort((a, b) -> b.getValue() - a.getValue()); // Ordena la lista de mayor a menor frecuencia.
+
+        int limite = Math.min(10, lista.size());
+        for (int i = 0; i < limite; i++) {
+            Map.Entry<String, Integer> entrada = lista.get(i);
+            System.out.println((i + 1) + ". " + entrada.getKey() + " - " + entrada.getValue() + " veces");
+        }
+    }
+}
+
